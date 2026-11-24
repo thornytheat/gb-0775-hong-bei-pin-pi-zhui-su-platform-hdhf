@@ -51,7 +51,7 @@ def rerun(key):
 
 @api.get('/export/<key>')
 def export(key):
-    proof=verify_and_export(cabinet().read(key))
+    proof=verify_and_export(cabinet().read(key),cabinet().read_labels())
     response=jsonify(proof)
     response.headers['Content-Disposition']=f'attachment; filename="roast-proof-{key[:12]}.json"'
     return response

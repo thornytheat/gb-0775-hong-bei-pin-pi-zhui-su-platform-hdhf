@@ -10,7 +10,7 @@ from app.modules.runs.service import seal_run
 
 def test_archived_manifest(client):
     response=client.post('/api/runs',json={'sample':'dirty'})
-    assert response.status_code==201 and response.json['manifest']['rules']=='roast-ledger-1.0'
+    assert response.status_code==201 and response.json['manifest']['rules']=='roast-ledger-1.1'
     assert len(response.json['manifest']['files'])==4
 
 
@@ -41,7 +41,8 @@ def test_parallel_publish(tmp_path,files):
     cabinet=Cabinet(tmp_path/'racing')
     with ThreadPoolExecutor(max_workers=4) as pool:
         all_runs=list(pool.map(lambda _:seal_run(cabinet,files),range(4)))
-    assert len(list(cabinet.path.iterdir()))==1 and sum(row['reused'] for row in all_runs)==3
+    archived=[file for file in cabinet.path.iterdir() if file.stem!='labels']
+    assert len(archived)==1 and sum(row['reused'] for row in all_runs)==3
 
 
 def test_damaged_archive(tmp_path,files):

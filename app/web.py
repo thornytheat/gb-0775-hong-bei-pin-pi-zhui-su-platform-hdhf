@@ -5,6 +5,7 @@ from flask import Blueprint,render_template,request
 from app.api import cabinet
 from app.config import RULE_VERSION
 from app.errors import RoastError
+from app.modules.proof.labels import present
 from app.modules.proof.recall import recall
 from app.modules.proof.service import verify_and_export
 from app.pipeline import compute
@@ -36,8 +37,8 @@ def counter(view='balance'):
     work=request.args.get('work') or next(iter(reports['supply']['jobs']))
     if work not in reports['supply']['jobs']:
         raise RoastError('NO_WORK','找不到该工作批',404)
-    proof=verify_and_export(document) if document and view=='proof' else None
-    packages=proof['packages'] if proof else recall(reports) if view=='proof' else {}
+    proof=verify_and_export(document,cabinet().read_labels()) if document and view=='proof' else None
+    packages=proof['packages'] if proof else present(recall(reports),{}) if view=='proof' else {}
     return render_template('base.html',view=view,panels=PANELS,records=reports,codebook=REASONS, sample=sample, key=key,
                            manifest=document['manifest'] if document else None, work=work, rule=RULE_VERSION,
                            proof=proof,packages=packages,dest=DEST,mass=mass,

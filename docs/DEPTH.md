@@ -10,7 +10,7 @@
 | M4 灌装与返料归并 | 比对净重、占用和可用返料 | `/api/lots/packing` | `app/modules/packing/budget.py` `app/modules/packing/settle.py` | `tests/test_packing.py` |
 | M5 重量守恒追溯 | 对平工作批、仓内和各产地账 | `/api/lots/balance` | `app/modules/balance/service.py` `app/modules/balance/stock.py` | `tests/test_balance.py` |
 | M6 批次留档复跑 | 查在柜卷联、按原件复算 | `/api/runs` | `app/modules/runs/cabinet.py` `app/modules/runs/service.py` | `tests/test_runs.py` |
-| M7 配方证据签发 | 从包装号取经过校验的来料证据 | `/api/export/<id>` | `app/modules/proof/recall.py` `app/modules/proof/service.py` | `tests/test_proof.py` |
+| M7 配方证据签发 | 从包装号取经过校验的来料证据，签发并冻结效期标签 | `/api/export/<id>` | `app/modules/proof/recall.py` `app/modules/proof/labels.py` `app/modules/proof/service.py` | `tests/test_proof.py` `tests/test_labels.py` |
 
 ## 陷阱登记
 
@@ -25,5 +25,7 @@
 | TRAP-15 | 同包装秤单使用 kg 和 g | 重计或误判冲突 | 归一后精确判重 | `app/modules/weighins/mass.py` `app/modules/weighins/dedup.py` | `tests/test_weighins.py::test_unit_normalized_duplicate` |
 | TRAP-19 | 两张返料申请独立看均够 | 按提交顺序抢占 | 总额超限则整组隔离 | `app/modules/supply/reservations.py` | `tests/test_supply.py::test_global_overdraw_no_first_claim` |
 | TRAP-20 | 双向返料引用 | 顺序无法确定 | 提取循环分量和实际路径 | `app/modules/lineage/cycles.py` | `tests/test_lineage.py::test_actual_cycle` |
+| TRAP-21 | 更早效期只经返料卷联入场 | 只看直接投料则标签晚于真实效期 | 效期沿返料边与克重同步取最早 | `app/modules/lineage/mix.py` | `tests/test_labels.py::test_return_coupon_carries_expiry` |
+| TRAP-22 | 产地日期晚到改早证据效期 | 改写已发标签 | 台账只增不改，标受影响 | `app/modules/proof/labels.py` | `tests/test_labels.py::test_issued_label_frozen_but_flagged` |
 
 库内可信核销 1670 g = 1405 g 灌装 + 75 g 损耗 + 90 g 工作批余料 + 100 g 未领返料。6 个未通过工作批合计 390 g 分批列待证。RT-A 300 g = 180 g 给 BA-02 + 120 g 给 BA-03。PK-C 275 g = 巴西 185.46 g + 哥伦比亚 17.6 g + 埃塞 71.94 g。

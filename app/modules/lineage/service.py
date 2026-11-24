@@ -33,9 +33,9 @@ def trace(supply, limits):
         unresolved=sorted(parent for parent in edges[work] if parent in result and result[parent]['codes'])
         if unresolved and work not in loop_paths:
             warnings.append('UPSTREAM_PENDING')
-        mix, feed_rows=({},[]) if warnings else blend(grouped[work],coupons,result)
+        mix, feed_rows, expiry=({},[],None) if warnings else blend(grouped[work],coupons,result,supply['origins'])
         result[work]=dict(work=work,input_g=job['g'],admitted_g=str(accepted),codes=warnings,
                           lots=feed_rows,composition_g=mix,job_line=job['line'],cycle_path=loop_paths.get(work,[]),
-                          upstream_pending=unresolved,reported_inputs=grouped[work],
+                          upstream_pending=unresolved,reported_inputs=grouped[work],best_before=expiry,
                           input_issues=supply['by_input_issue'].get(work,[]))
     return dict(jobs=result,cycles=loops,certified=sum(not row['codes'] for row in result.values()))

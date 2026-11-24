@@ -1,4 +1,4 @@
-origin,label,available,unit
-ET-01,耶加雪菲西坡,1000,g
-BR-08,巴西黄波旁,0.8,kg
-CO-04,慧兰水洗,500000,mg
+origin,label,available,unit,best_before
+ET-01,耶加雪菲西坡,1000,g,2027-05-31
+BR-08,巴西黄波旁,0.8,kg,2027-02-28
+CO-04,慧兰水洗,500000,mg,2027-01-31

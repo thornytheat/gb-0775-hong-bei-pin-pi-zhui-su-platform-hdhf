@@ -3,6 +3,7 @@ import os
 import re
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from threading import Lock
 
 from app.errors import RoastError
 
@@ -15,6 +16,7 @@ class Cabinet:
     def __init__(self, directory):
         self.path=Path(directory)
         self.path.mkdir(parents=True,exist_ok=True)
+        self._labels_lock=Lock()
 
     def write(self, document):
         final=self.path / f'{document["manifest"]["id"]}.json'
@@ -50,3 +52,33 @@ class Cabinet:
             if KEY.fullmatch(file.stem):
                 entries.append((file.stat().st_mtime_ns,file.stem))
         return [self.read(key)['manifest'] for _,key in sorted(entries,reverse=True)[:30]]
+
+    def read_labels(self):
+        try:
+            return json.loads((self.path / 'labels.json').read_text(encoding='utf-8'))
+        except FileNotFoundError:
+            return {}
+        except (json.JSONDecodeError,UnicodeError) as exc:
+            raise RoastError('DAMAGED_LABELS','标签台账不可读',409) from exc
+
+    def merge_labels(self, fresh, marks):
+        with self._labels_lock:
+            ledger=self.read_labels()
+            for key,label in fresh.items():
+                ledger.setdefault(key,label)
+            for key,mark in marks.items():
+                label=ledger.get(key)
+                if label is not None and label.get('affected') is None:
+                    label['affected']=mark
+            part=None
+            try:
+                with NamedTemporaryFile(mode='w',encoding='utf-8',dir=self.path,prefix='.labels-',delete=False) as stream:
+                    part=Path(stream.name)
+                    stream.write(encode(ledger))
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(part,self.path / 'labels.json')
+            finally:
+                if part is not None:
+                    part.unlink(missing_ok=True)
+            return ledger
